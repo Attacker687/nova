@@ -1,0 +1,9 @@
+{
+  "name": "nova",
+  "version": "0.1.0",
+  "description": "自用 AI 编程与飞书协作工具集：飞书评论收敛、飞书画图、wiki 整理、工作进度保存与恢复。",
+  "author": {
+    "name": "Attacker687"
+  },
+  "license": "MIT"
+}

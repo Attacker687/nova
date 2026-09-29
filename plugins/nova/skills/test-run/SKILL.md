@@ -5,6 +5,8 @@ description: 执行测试方案：把用例写成自动化测试并运行，人�
 
 # test-run：执行测试
 
+开始前先读 [运行环境约定](../../references/runtime.md)，按当前宿主处理路径、命令和子 agent。
+
 输入是 `docs/nova/【功能】/testplan.json`（`status` 应为 `approved`，且已有用例）。产出：
 - 测试代码：写在独立分支 `nova/【功能】-test` 上；
 - 执行结果：`.nova/【功能】/test/results.json`；
@@ -17,7 +19,7 @@ description: 执行测试方案：把用例写成自动化测试并运行，人�
 ## 1. 准备
 
 1. **被测分支**：默认用 `nova/【功能】`（build 的结果），没有就用当前分支，和用户确认。
-2. **worktree**：`git worktree add .nova/worktrees/_test -b nova/【功能】-test 【被测分支】`；分支已存在时去掉 `-b`，直接检出它。`.nova` 没被 git 忽略时，按 `nova:build` 第 1 步的办法处理。
+2. **worktree**：按 `../../references/runtime.md` 创建或复用测试 worktree，分支 `nova/【功能】-test`，基线为 `【被测分支】`，实际路径记入 `【过程】/worktrees.json`。`.nova` 没被 git 忽略时，按 `nova:build` 第 1 步的办法处理。
 3. **运行方式**：按类型确认，写进 `【过程】/env.md`。
    - 单元测试：项目的测试命令。
    - 接口测试：服务怎么启动、地址是什么、测试账号怎么拿。
@@ -28,7 +30,7 @@ description: 执行测试方案：把用例写成自动化测试并运行，人�
 
 1. 把 `automatable` 为 true 的用例按测试点类型（unit / api / e2e）分组，每组再切成每批不超过 15 条。
 2. 每批派一个 `nova:test-runner`。派单附：worktree 路径、这批用例和对应测试点、代码地图目录、`env.md`、`【nova】/references/grounding.md`；测试放在哪里，按项目惯例定，没有惯例就放 `tests/nova/【功能】/`；JUnit 输出 `【过程】/junit-【批次】.xml`；运行记录 `【过程】/run-【批次】.md`。
-   - 单元测试的各批可以在一条消息里同时派出；共用同一个服务或数据库的接口和端到端测试逐批派出，避免互相干扰。
+   - 共用这个测试 worktree 的各批逐批派出，避免同时改文件、提交或运行测试而互相干扰；有独立 checkout 和独立测试资源时才按运行环境约定并行。
 3. 每批返回后导入结果：`python results.py import 【过程】/junit-【批次】.xml --plan 【testplan.json】 --out 【过程】/results.json`。提示「没有用例编号」的测试，让该批的 test-runner 改名后重跑。
 
 ## 3. 人工用例

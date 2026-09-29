@@ -5,6 +5,8 @@ description: 写方案：先和用户对齐目标，再由一个 agent 写、另
 
 # design：写方案
 
+开始前先读 [运行环境约定](../../references/runtime.md)，按当前宿主处理路径、命令和子 agent。
+
 一份方案 = `docs/nova/【功能】/goal.md`（目标）+ `docs/nova/【功能】/design.md`（方案）。本地文件是正本；飞书只用来展示和收评论，评论处理完同步回本地再重新发布。
 
 `【nova】` 指本 skill 目录往上两级的插件根目录，下文路径都写成绝对路径使用。

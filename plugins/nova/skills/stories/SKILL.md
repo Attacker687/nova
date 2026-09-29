@@ -5,6 +5,8 @@ description: 把定稿的技术方案拆成可以逐个实现和验收的 Story�
 
 # stories：拆 Story
 
+开始前先读 [运行环境约定](../../references/runtime.md)，按当前宿主处理路径、命令和子 agent。
+
 输入是 `docs/nova/【功能】/design.md`（状态应为 `approved`），输出是 `docs/nova/【功能】/stories.json`（正本，build 读它）和由它渲染出的 `stories.md`（给人读）。
 
 `【nova】` 指本 skill 目录往上两级的插件根目录；下文路径都写成绝对路径使用。

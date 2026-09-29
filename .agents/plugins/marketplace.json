@@ -1,0 +1,20 @@
+{
+  "name": "nova",
+  "interface": {
+    "displayName": "Nova"
+  },
+  "plugins": [
+    {
+      "name": "nova",
+      "source": {
+        "source": "local",
+        "path": "./plugins/nova"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

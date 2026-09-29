@@ -147,7 +147,7 @@ def preview_tree(tree: dict, items: list[dict]) -> dict:
 
 def summary_line(count: int) -> str:
     """报告顶部的摘要行；执行后用 str_replace 按原文替换它，所以措辞要稳定。"""
-    return f"{SUMMARY_PREFIX} {count} 项 · 勾选要执行的项，然后回到 Claude 说「按勾选整理」"
+    return f"{SUMMARY_PREFIX} {count} 项 · 勾选要执行的项，然后回到对话说「按勾选整理」"
 
 
 def _code(text: str) -> str:

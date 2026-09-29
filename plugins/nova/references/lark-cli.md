@@ -6,13 +6,13 @@ nova 的飞书操作一律用飞书官方命令行 `lark-cli`（npm 包 `@larksu
 
 - **一律带 `--as user`**：用登录用户本人的身份操作。不用 `--as bot`。
 - **文档参数接受链接或 token**：`--doc`、`--url`、`--node-token` 直接传飞书链接即可，知识库（wiki）链接会自动解析成底层文档。
-- **多行内容先写进临时文件**，用 `--content @【文件】` 传入，shell 转义会弄坏写在命令行里的多行内容。`@` 后面**只能是当前目录下的相对路径**（绝对路径报 `unsafe file path`），所以命令写成 `cd 【文件所在目录】 && lark-cli … --content @文件名`。
+- **多行内容先写进临时文件**，用 `--content @【文件】` 传入，shell 转义会弄坏写在命令行里的多行内容。`@` 后面**只能是当前目录下的相对路径**（绝对路径报 `unsafe file path`），所以先把命令的工作目录设为文件所在目录，再执行 `lark-cli … --content '@文件名'`。
 - **内容格式**：`--content` 默认按 XML 解析，加 `--doc-format markdown` 才按 Markdown。勾选框、画板、高亮块、@人 这些只有 XML 能表达；Markdown 里也可以直接嵌 XML 标签，标签会生效。两种格式的完整写法用 `lark-cli skills read lark-doc/references/lark-doc-xml.md` 和 `lark-cli skills read lark-doc/references/lark-doc-md.md` 查。
 - **转义**：XML 文本里 `<` `>` `&` 写成 `&lt;` `&gt;` `&amp;`，换行写 `<br/>`。Markdown 里字面的 `[ ] * _ \` < $ ~` 要加 `\`；`docs +fetch --doc-format markdown` 读回的内容已经是转义形式，拿去做 `--pattern` 或写回时原样使用。
 - **输出是 JSON**：`ok` 为 `true` 才算成功。用 `-q '【jq 表达式】'` 取字段，例如 `-q '.data.document.content'`。
 - **通用接口路径不带开头的 `/`**：写 `lark-cli api GET drive/v1/files/【token】/comments`。Windows 的 Git Bash 会把以 `/` 开头的参数改写成本地路径，导致 404。
 - **删除类操作要加 `--yes`**，否则 CLI 拒绝执行。
-- **长输出先写文件再读**：Claude Code 会截断过长的命令输出。读长文档或大量评论时先 `… > 【临时文件】`，再分段读文件。
+- **长输出先写文件再读**：命令工具可能截断过长的输出。读长文档或大量评论时先 `… > 【临时文件】`，再分段读文件。
 - **查登录状态**：`lark-cli auth status`。`.identities.user.tokenStatus` 为 `valid` 即登录有效，`.identities.user.userName` 是用户名。
 - **缺权限**时报 `missing_scope` 并列出缺的权限。处理办法：先在飞书开放平台给应用开通该权限（用户身份），再运行 `lark-cli auth login --scope "【原有权限 + 缺的权限】" --no-wait --json`，把返回的 `verification_url` 发给用户去浏览器授权，用户确认后运行 `lark-cli auth login --device-code 【device_code】`。
 - **未登录或登录过期**：请用户在自己的终端运行 `lark-cli auth login`。不要替用户输入任何凭证。

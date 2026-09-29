@@ -1,6 +1,6 @@
 # nova
 
-一个 Claude Code 插件：从需求到上线前的 AI 编程流程（代码地图 → 方案 → Story → 实现 → 测试），加上飞书文档协作和工作进度交接。
+一个兼容 Codex 和 Claude Code 的插件：从需求到上线前的 AI 编程流程（代码地图 → 方案 → Story → 实现 → 测试），加上飞书文档协作和工作进度交接。
 
 ## 包含什么
 
@@ -61,8 +61,8 @@ flowchart LR
 
 ## 准备
 
-- [Claude Code](https://claude.com/claude-code)
-- Python 3.10+、git。skill 里的脚本一律用 `python` 命令调用；Mac/Linux 上只有 `python3` 时，要让 `python` 也指向它（如 Homebrew 的 `python` 别名、Debian/Ubuntu 的 `python-is-python3` 包）
+- Codex（支持插件和子 agent 的版本）或 [Claude Code](https://claude.com/claude-code)。代码地图、写评分离、实现与验收需要子 agent；飞书操作、交接和报告生成可单独使用。
+- Python 3.10+、git。skill 里的 `python` 可替换为本机的 `python3` 或解释器绝对路径；Windows 下用 `python -X utf8`，避免中文和符号的编码问题。
 - 飞书官方命令行 lark-cli：`feishu-comment`、`feishu-diagram`、`feishu-wiki` 和「发布到飞书」都靠它；不用飞书可以跳过。在自己的终端里做三步：
   1. 安装：`npm install -g @larksuite/cli`
   2. 绑定飞书应用：`lark-cli config init`，按提示新建一个应用，或填入已有自建应用的 App ID 和 App Secret
@@ -71,6 +71,38 @@ flowchart LR
   需要的权限：云文档读写（`docx:document:*`）、文档评论（`docs:document.comment:*`）、知识库节点（`wiki:node:read/create/move/retrieve`、`wiki:space:read`）、画板（`board:whiteboard:node:create/read`）。缺权限时 lark-cli 会报 `missing_scope` 并列出缺什么，在开放平台补开通后重新登录即可。
 
 ## 安装
+
+### Codex
+
+本地源码安装（在终端里运行，路径换成自己的仓库目录）：
+
+```powershell
+codex plugin marketplace add E:\Code\nova
+codex plugin add nova@nova
+```
+
+适配提交推到 GitHub 后，也可以从仓库安装：
+
+```bash
+codex plugin marketplace add https://github.com/Attacker687/nova.git
+codex plugin add nova@nova
+```
+
+装好后打开新聊天，在技能选择器里选择 nova 的对应 skill，或直接说「用 nova 为当前项目生成代码地图」「用 nova 写技术方案」「用 nova 恢复进度」。本文的 `nova:design` 等名称表示插件里的工作流，不需要在 shell 中执行。
+
+Codex 和 Claude Code 共用同一套 skill、角色文件与 Python 脚本，具体的工具映射见 [运行环境约定](plugins/nova/references/runtime.md)。Codex 不会自动注册 `agents/*.md` 中的 Claude agent；skill 会读取角色说明，再派出独立子 agent。并发数随宿主调整，评审和验收仍与实现分开；缺少子 agent 能力时会报告未完成的步骤。
+
+Codex app 提供 worktree 管理工具时使用托管目录；CLI 环境使用 git worktree。实际路径保存在 `.nova/【功能】/build/worktrees.json` 或 `test/worktrees.json`，中断后据此恢复。
+
+更新本地源码后，先更新插件版本再重新安装。开发时可只给 `.codex-plugin/plugin.json` 的版本追加或替换 `+codex.【唯一标记】`（例如 `0.2.1+codex.dev1`），以刷新缓存：
+
+```powershell
+codex plugin add nova@nova
+```
+
+已安装的版本来自插件缓存；发布更新时同步修改两个插件清单的版本号。Git 来源的安装先 `codex plugin marketplace upgrade nova`，再重新安装，最后打开新聊天。
+
+### Claude Code
 
 在 Claude Code 里：
 
@@ -88,7 +120,7 @@ claude plugin marketplace update nova
 claude plugin update nova@nova
 ```
 
-### 团队里用
+### Claude Code 团队配置
 
 把下面内容加进项目的 `.claude/settings.json` 并提交。同事打开项目、信任这个文件夹后，Claude Code 会提示安装 nova：
 
@@ -110,7 +142,7 @@ claude plugin update nova@nova
 | 位置 | 内容 | 建议 |
 |---|---|---|
 | `docs/codemap/`、`docs/nova/` | 代码地图、目标、方案、Story、测试方案、缺陷、报告 | 提交进 git |
-| `.nova/` | 写评过程、评审结果、构建状态、测试结果、worktree、本机交接单 | 不提交；nova 会把它加进 `.git/info/exclude` |
+| `.nova/` | 写评过程、评审结果、构建状态、测试结果、worktree 路径记录、手动 worktree、本机交接单 | 不提交；nova 会把它加进 git 的本机 exclude 文件 |
 | 分支 `nova/【功能】`、`nova/【功能】-test` | 实现和测试代码 | 审阅后合并 |
 | 分支 `nova-handoff` | 推到远端的交接单 | 与主分支历史无关 |
 | `~/.nova/wiki/` | wiki 整理的快照和执行计划 | 用完可删 |
@@ -118,11 +150,13 @@ claude plugin update nova@nova
 ## 开发
 
 ```text
-.claude-plugin/marketplace.json   插件市场
+.agents/plugins/marketplace.json Codex 插件市场
+.claude-plugin/marketplace.json   Claude Code 插件市场
 plugins/nova/
+  .codex-plugin/plugin.json        Codex 插件清单
   .claude-plugin/plugin.json
-  agents/                         7 个 agent
-  references/                     共用规则：lark-cli.md、grounding.md、review-format.md、review-loop.md
+  agents/                         7 个角色：Claude 原生 agent / Codex 子 agent 参考
+  references/                     共用规则：runtime.md、lark-cli.md、grounding.md、review-format.md、review-loop.md
   skills/【skill】/SKILL.md        skill 主流程
   skills/【skill】/scripts/        确定性脚本（只用 Python 标准库）
   skills/【skill】/references/     只有这个 skill 用的参考
@@ -131,6 +165,6 @@ tests/                            脚本的测试
 ```
 
 - 跑测试：`python -m pytest tests/`
-- 本地调试：`/plugin marketplace add 【本地克隆路径】` 再 `/plugin install nova@nova`。改了插件源码后重新安装（先 `/plugin uninstall nova@nova` 再 install），开新会话生效。
-- 发新版：`plugin.json` 和 `marketplace.json` 里的 `version` 一起改，推到 GitHub 后别人按「安装」一节的更新命令拿到新版。
-- 一条规则只写在一个地方：飞书用法在 `lark-cli.md`，写评循环在 `review-loop.md`，skill 引用它们而不重复。
+- 本地调试：Codex 按上面的本地源码安装；Claude Code 用 `/plugin marketplace add 【本地克隆路径】` 再 `/plugin install nova@nova`。改了源码后重新安装，开新会话生效。
+- 发新版：两个 `plugin.json` 和 `.claude-plugin/marketplace.json` 里的 `version` 一起改，移除本地开发用的 `+codex.…` 后缀，推到 GitHub 后别人按「安装」一节的更新命令拿到新版。
+- 一条规则只写在一个地方：宿主适配在 `runtime.md`，飞书用法在 `lark-cli.md`，写评循环在 `review-loop.md`，skill 引用它们而不重复。不要只复制 `skills/` 子目录安装，跨 skill 的脚本、共享规则和角色文件都需要随插件保留。

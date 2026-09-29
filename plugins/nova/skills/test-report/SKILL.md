@@ -5,6 +5,8 @@ description: 根据测试方案、执行结果和缺陷清单生成测试报告�
 
 # test-report：测试报告
 
+开始前先读 [运行环境约定](../../references/runtime.md)，按当前宿主处理路径、命令和子 agent。
+
 `【nova】` 指本 skill 目录往上两级的插件根目录；下文路径都写成绝对路径使用。
 
 ## 1. 生成

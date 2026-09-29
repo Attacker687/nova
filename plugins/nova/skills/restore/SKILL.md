@@ -5,6 +5,8 @@ description: 恢复之前用 save 保存的工作进度，读交接单并接着�
 
 # restore：恢复工作进度
 
+开始前先读 [运行环境约定](../../references/runtime.md)，按当前宿主处理路径、命令和子 agent。
+
 交接单由 save 写入本机的 `.nova/handoff/` 和项目 git 的 `nova-handoff` 分支。下文的 `handoff.py` 指 `【本 skill 目录】/../save/scripts/handoff.py`，调用时写成绝对路径；命令在项目仓库根目录运行。
 
 ## 1. 找交接单

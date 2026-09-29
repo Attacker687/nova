@@ -5,7 +5,9 @@ description: 按 Story 清单逐个实现功能：每个 Story 在独立 git wor
 
 # build：逐个实现 Story
 
-输入是 `docs/nova/【功能】/stories.json`（`status` 应为 `approved`）。所有开发都在 `.nova/worktrees/` 下的 worktree 里进行，用户当前的工作目录和分支不受影响；结果是功能分支 `nova/【功能】`。
+开始前先读 [运行环境约定](../../references/runtime.md)，按当前宿主处理路径、命令和子 agent。
+
+输入是 `docs/nova/【功能】/stories.json`（`status` 应为 `approved`）。所有开发都在独立 worktree 里进行（创建与收尾按 `../../references/runtime.md`；实际路径记在过程目录的 `worktrees.json`），用户当前的工作目录和分支不受影响；结果是功能分支 `nova/【功能】`。
 
 `【nova】` 指本 skill 目录往上两级的插件根目录；`state.py` 指 `scripts/build_state.py`，`review_check.py` 指 `【nova】/skills/design/scripts/review_check.py`。路径都写成绝对路径使用，git 命令在仓库根目录运行。过程目录 `.nova/【功能】/build/`，下文简称【过程】；每个 Story 的文件放 `【过程】/【S】/`。
 
@@ -15,10 +17,10 @@ description: 按 Story 清单逐个实现功能：每个 Story 在独立 git wor
 
 1. stories.json 的 `status` 不是 `approved` 时，先问用户是否仍要开始。
 2. `git status --porcelain` 有输出时，提醒用户：未提交的改动不会进入功能分支。
-3. `git check-ignore -q .nova` 失败时，把 `.nova/` 追加到 `.git/info/exclude`（只影响本机），并告诉用户。
+3. `git check-ignore -q .nova` 失败时，用 `git rev-parse --git-path info/exclude` 找到忽略文件，再把 `.nova/` 追加进去（只影响本机），并告诉用户。
 4. **测试命令**：从代码地图 README 的「怎么跑」、构建文件、CI 配置里找出跑全部测试的命令，以及 worktree 里需要先执行的准备命令（如 `npm ci`，没有就留空），请用户确认。
 5. 建分支和集成 worktree（基线分支默认是当前分支，和用户确认）：
-   `git branch nova/【功能】 【基线】`，`git worktree add .nova/worktrees/_integration nova/【功能】`，在集成 worktree 里跑一次准备命令和测试命令，把基线上本来就失败的测试（测试名和一句话原因）写进 `【过程】/baseline-failures.md`，没有就写「无」。之后判断「新失败」都以这个文件为准，中断后恢复也靠它。
+   按运行环境约定创建或复用集成 worktree，分支 `nova/【功能】`，基线为 `【基线】`。在集成 worktree 里跑一次准备命令和测试命令，把基线上本来就失败的测试（测试名和一句话原因）写进 `【过程】/baseline-failures.md`，没有就写「无」。之后判断「新失败」都以这个文件为准，中断后恢复也靠它。
 6. `python state.py init --stories 【stories.json】 --state 【过程】/state.json --feature-branch nova/【功能】 --base 【基线】 --test-cmd "…" --setup-cmd "…"`
 
 ## 2. 逐个 Story
@@ -29,7 +31,7 @@ description: 按 Story 清单逐个实现功能：每个 Story 在独立 git wor
 
 ### 2.1 建 worktree（新 Story）
 
-`git worktree add .nova/worktrees/【S】 -b nova/【功能】-【S】 nova/【功能】`，在其中跑准备命令。用 `git rev-parse nova/【功能】` 取分叉点提交，记下：
+按运行环境约定创建或复用 Story worktree，分支 `nova/【功能】-【S】`，基线为 `nova/【功能】`，在其中跑准备命令。用 `git rev-parse nova/【功能】` 取分叉点提交，记下：
 `python state.py set --state … 【S】 --status implementing --round 1 --base 【分叉点提交】`
 
 ### 2.2 实现（第 r 轮）
@@ -40,7 +42,7 @@ description: 按 Story 清单逐个实现功能：每个 Story 在独立 git wor
 
 ### 2.3 三路评审
 
-`state.py set … --status reviewing`。在一条消息里同时派 3 个 `nova:code-reviewer`，视角分别为 `general`、`adversarial`、`edge`，输出 `【过程】/【S】/review-【视角】-r【r】.json`。
+`state.py set … --status reviewing`。按运行环境约定派 3 个独立的 `nova:code-reviewer`（名额够时并行，否则分批），视角分别为 `general`、`adversarial`、`edge`，输出 `【过程】/【S】/review-【视角】-r【r】.json`。
 
 - 第 1 轮评审范围 `【base】..HEAD`。
 - 之后的轮次评审范围 `【reviewed】..HEAD`，并附上一轮的合并问题清单和裁定，以及本轮改动的文件列表；让评审员核对修复、只看新改动和受影响的调用方。
@@ -64,7 +66,7 @@ description: 按 Story 清单逐个实现功能：每个 Story 在独立 git wor
 3. `pass`：`state.py set … --status merging`，在集成 worktree 里 `git merge --no-ff nova/【功能】-【S】 -m "【S】 【标题】"`。
    - 有冲突：`git merge --abort`，按 2.6 处理。
    - 合并后在集成 worktree 跑测试命令。出现 `baseline-failures.md` 之外的新失败，按 2.6 处理。
-4. 清理：`git worktree remove .nova/worktrees/【S】`，在集成 worktree 里 `git branch -d nova/【功能】-【S】`；
+4. 按运行环境约定收尾 Story worktree；临时分支 `nova/【功能】-【S】` 已合并且没有被检出时，在集成 worktree 里 `git branch -d nova/【功能】-【S】`；
    `state.py set … --status done --commit 【合并提交】`。回到第 2 步开头。
 
 ### 2.6 卡住
@@ -74,5 +76,5 @@ description: 按 Story 清单逐个实现功能：每个 Story 在独立 git wor
 ## 3. 收尾
 
 1. `python state.py show --state 【过程】/state.json`。
-2. 全部完成时：在集成 worktree 跑一次测试命令，对照 `baseline-failures.md` 分出新失败和原有失败，然后 `git worktree remove .nova/worktrees/_integration`。
+2. 全部完成时：在集成 worktree 跑一次测试命令，对照 `baseline-failures.md` 分出新失败和原有失败，然后按运行环境约定收尾集成 worktree，保留功能分支。
 3. 告诉用户：功能分支 `nova/【功能】`（相对基线的提交数）、每个 Story 的轮次、最终测试结果、`followups.md` 里的待办、卡住的 Story。建议下一步：用 `nova:test-plan` 设计测试，或审阅后合并功能分支。推送和建 PR 等用户要求再做。

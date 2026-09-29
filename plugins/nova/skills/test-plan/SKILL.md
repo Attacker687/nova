@@ -5,6 +5,8 @@ description: 设计测试：从需求、方案、Story 验收标准和代码业�
 
 # test-plan：设计测试
 
+开始前先读 [运行环境约定](../../references/runtime.md)，按当前宿主处理路径、命令和子 agent。
+
 产物是 `docs/nova/【功能】/testplan.json`（正本，test-run 读它）和由它渲染出的 `test-plan.md`（给人读）。分两段：先定测试点，用户确认后再生成用例。
 
 `【nova】` 指本 skill 目录往上两级的插件根目录；下文路径都写成绝对路径使用。过程目录 `.nova/【功能】/test-plan/`。

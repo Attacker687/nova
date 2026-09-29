@@ -5,6 +5,8 @@ description: 在飞书文档里画可编辑的图（飞书画板，不是图片�
 
 # feishu-diagram：飞书画板
 
+开始前先读 [运行环境约定](../../references/runtime.md)，按当前宿主处理路径、命令和子 agent。
+
 飞书命令写法和坑以 `../../references/lark-cli.md` 为准，第一次调用 lark-cli 前先读它。
 
 ## 1. 选画法

@@ -1,8 +1,8 @@
 """wiki 整理的确定性部分：校验整理项、渲染报告、读回勾选、生成执行计划。
 
 用法：
-    python wiki_plan.py report --tree tree.json --items items.json --out report.md [--rules "规则来源说明"]
-    python wiki_plan.py checked 报告读回.md
+    python wiki_plan.py report --tree tree.json --items items.json --out report.xml [--rules "规则来源说明"]
+    python wiki_plan.py checked 报告读回.xml
     python wiki_plan.py plan --before tree.json --now tree_now.json --items items.json --checked W-001,W-003 --out plan.json
 
 items.json 形如 {"items": [整理项, ...]}，每项：

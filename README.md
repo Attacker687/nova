@@ -1,22 +1,69 @@
 # nova
 
-自用的 Claude Code 插件：飞书文档协作 + 工作进度交接，后续扩展到方案写作、开发和测试流水线。
+自用的 Claude Code 插件：从需求到上线前的 AI 编程流程（代码地图 → 方案 → Story → 实现 → 测试），加上飞书文档协作和工作进度交接。
 
 ## 包含什么
 
-| skill | 做什么 | 怎么触发 |
+### 开发流程
+
+```mermaid
+flowchart LR
+  codemap[codemap<br>代码地图] --> design[design<br>方案]
+  design --> stories[stories<br>拆 Story]
+  stories --> build[build<br>实现]
+  design --> testplan[test-plan<br>测试设计]
+  stories --> testplan
+  build --> testrun[test-run<br>执行测试]
+  testplan --> testrun
+  testrun --> report[test-report<br>测试报告]
+```
+
+| skill | 做什么 | 产物 |
 |---|---|---|
-| `nova:feishu-comment` | 按飞书评论改文档：明确的意见改进正文，要拍板的记进文档末尾的「待决策」表，处理过的评论标为已解决 | 给文档链接，说「处理评论」 |
-| `nova:feishu-diagram` | 在飞书文档里画可编辑的图（mermaid / SVG / 配色思维导图），也能改已有的图 | 「把这个流程画到飞书文档里」 |
-| `nova:feishu-wiki` | 体检 wiki 目录结构，出带勾选框的整理报告；勾选后执行移动、归档、改名、新建 | 给 wiki 链接说「整理这个知识库」；勾选后说「按勾选整理」 |
-| `nova:save` | 写交接单，推到项目 git 的 `nova-handoff` 分支 | 「保存进度」 |
-| `nova:restore` | 找到最新交接单，对齐代码，接着干 | 「恢复进度」 |
+| `nova:codemap` | 读代码生成代码地图：模块、入口、数据、关键流程、业务规则、约定；支持增量更新 | `docs/codemap/【程序】/` |
+| `nova:design` | 先对齐目标，再一个 agent 写、一个 agent 评（最多 3 轮），交你拍板；技术方案和通用方案两种模板；可发飞书收评论 | `docs/nova/【功能】/goal.md`、`design.md` |
+| `nova:stories` | 把定稿方案拆成 Story，每条验收标准指明生产代码入口 | `stories.json`、`stories.md` |
+| `nova:build` | 每个 Story 在独立 worktree 里测试驱动开发 → 通用/对抗/边界三路代码评审 → 独立验收 → 合并；最多返工 3 轮 | 分支 `nova/【功能】` |
+| `nova:test-plan` | 列判据项 → 拆有依据的原子测试点 → 生成用例，写评分离 | `testplan.json`、`test-plan.md` |
+| `nova:test-run` | 用例写成自动化测试并执行，人工用例交你执行，登记缺陷，支持复测 | 分支 `nova/【功能】-test`、`defects.json` |
+| `nova:test-report` | 按固定规则给出通过 / 有条件通过 / 不通过，出报告，可发飞书 | `test-report.md` |
+
+各步可以单独用：只想要代码地图、只写一份方案、只给现有功能补测试都行。
+
+### 飞书协作与进度交接
+
+| skill | 做什么 |
+|---|---|
+| `nova:feishu-comment` | 按飞书评论改文档：明确的意见改进正文，要拍板的记进「待决策」表，处理过的评论标为已解决 |
+| `nova:feishu-diagram` | 在飞书文档里画可编辑的图（mermaid / SVG / 配色思维导图），也能改已有的图 |
+| `nova:feishu-wiki` | 体检 wiki 目录结构，出带勾选框的整理报告；勾选后执行移动、归档、改名、新建 |
+| `nova:save` / `nova:restore` | 写交接单并推到项目 git 的 `nova-handoff` 分支；新会话或另一台机器上恢复 |
+
+### agent
+
+| agent | 职责 | 谁派 |
+|---|---|---|
+| `codemapper` | 读代码写代码地图 | codemap |
+| `doc-writer` | 按模板写或改文档 | design、stories、test-plan |
+| `doc-reviewer` | 评审文档，只评不改 | design、stories、test-plan |
+| `implementer` | 在 worktree 里测试驱动实现 | build |
+| `code-reviewer` | 三种视角之一评审代码 | build |
+| `verifier` | 独立验收 | build |
+| `test-runner` | 写自动化测试并执行、区分失败原因 | test-run |
+
+## 设计原则
+
+- **本地文件是正本**，飞书只用来展示和收评论。
+- **写和评分开**：写的 agent 和评的 agent 互不相干，主会话核实每个严重问题再裁定。
+- **有据可查**：关于现有代码的每句话带 `路径:行号`，脚本 `refcheck.py` 机械核对。
+- **该你拍板的交给你**：方向、范围、优先级、取舍进「待决策」表，agent 只给选项和建议。
+- **能用脚本算的不交给模型**：盘点、校验、排序、合并评审、统计和结论都由脚本完成并有测试。
 
 ## 准备
 
 - [Claude Code](https://claude.com/claude-code)
 - Python 3.10+、git
-- 飞书官方命令行：`npm install -g @larksuite/cli`，然后在自己的终端里 `lark-cli auth login` 用个人身份登录。需要的用户身份权限：云文档读写（`docx:document:*`）、文档评论（`docs:document.comment:*`）、知识库节点（`wiki:node:read/create/move/retrieve`、`wiki:space:read`）、画板（`board:whiteboard:node:create/read`）。缺权限时 lark-cli 会报 `missing_scope` 并列出缺什么。
+- 飞书相关的 skill 需要飞书官方命令行：`npm install -g @larksuite/cli`，然后在自己的终端里 `lark-cli auth login`。需要的用户身份权限：云文档读写（`docx:document:*`）、文档评论（`docs:document.comment:*`）、知识库节点（`wiki:node:read/create/move/retrieve`、`wiki:space:read`）、画板（`board:whiteboard:node:create/read`）。缺权限时 lark-cli 会报 `missing_scope` 并列出缺什么。
 
 ## 安装
 
@@ -27,35 +74,32 @@
 /plugin install nova@nova
 ```
 
-改了插件源码后，重新安装（先 `/plugin uninstall nova@nova` 再 install），并开一个新会话才会生效。
+改了插件源码后重新安装（先 `/plugin uninstall nova@nova` 再 install），开新会话生效。
 
 ## 会在哪里留下文件
 
 | 位置 | 内容 | 建议 |
 |---|---|---|
-| 项目里的 `.nova/` | 本机的交接单等运行时文件 | 加进项目的 `.gitignore` |
-| 项目 git 的 `nova-handoff` 分支 | 推到远端的交接单，供其他机器恢复 | 与主分支历史无关，可随时删 |
-| `~/.nova/wiki/【时间戳】/` | 每次 wiki 整理的树快照、整理项、报告和执行计划 | 用完可删 |
+| `docs/codemap/`、`docs/nova/` | 代码地图、目标、方案、Story、测试方案、缺陷、报告 | 提交进 git |
+| `.nova/` | 写评过程、评审结果、构建状态、测试结果、worktree、本机交接单 | 不提交；nova 会把它加进 `.git/info/exclude` |
+| 分支 `nova/【功能】`、`nova/【功能】-test` | 实现和测试代码 | 审阅后合并 |
+| 分支 `nova-handoff` | 推到远端的交接单 | 与主分支历史无关 |
+| `~/.nova/wiki/` | wiki 整理的快照和执行计划 | 用完可删 |
 
 ## 开发
 
 ```text
-.claude-plugin/marketplace.json   本地插件市场（只有 nova 一个插件）
+.claude-plugin/marketplace.json   本地插件市场
 plugins/nova/
   .claude-plugin/plugin.json
-  references/lark-cli.md          飞书 CLI 用法与实测坑，所有 skill 共用这一份
+  agents/                         7 个 agent
+  references/                     共用规则：lark-cli.md、grounding.md、review-format.md、review-loop.md
   skills/【skill】/SKILL.md        skill 主流程
-  skills/【skill】/scripts/        确定性的辅助脚本（只用 Python 标准库）
+  skills/【skill】/scripts/        确定性脚本（只用 Python 标准库）
+  skills/【skill】/references/     只有这个 skill 用的参考
+  skills/【skill】/templates/      模板
 tests/                            脚本的测试
 ```
 
 - 跑测试：`python -m pytest tests/`
-- 飞书命令的写法、限制和坑只记在 `references/lark-cli.md`，skill 里引用它，不重复写。
-- 能用脚本确定算出来的（树结构、报告渲染、勾选解析、git 操作）放脚本并写测试；需要判断的留给 SKILL.md。
-
-## 路线
-
-1. ✅ 飞书协作 + 进度交接
-2. 代码地图 + 方案写作（一个 agent 写、一个 agent 评）
-3. Story 拆分 + TDD 实现 + 三路代码评审 + 独立验收
-4. 测试方案 → 测试执行 → 测试报告
+- 一条规则只写在一个地方：飞书用法在 `lark-cli.md`，写评循环在 `review-loop.md`，skill 引用它们而不重复。

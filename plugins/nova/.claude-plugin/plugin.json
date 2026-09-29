@@ -1,6 +1,6 @@
 {
   "name": "nova",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "自用 AI 编程与飞书协作工具集：代码地图、写评分离出方案、拆 Story、TDD 实现与三路评审、测试设计执行与报告；飞书评论收敛、画图、wiki 整理；工作进度交接。",
   "author": {
     "name": "Attacker687"

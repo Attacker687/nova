@@ -67,11 +67,15 @@ description: 写方案：先和用户对齐目标，再由一个 agent 写、另
 4. 把文档链接写进 design.md 文件头的 `feishu:` 字段。
 
 **处理评论**（用户说「处理飞书评论」时）：
-1. `drive +list-comments --url 【feishu 链接】 --solved-status false` 读出全部未解决评论。
-2. 按 `nova:feishu-comment` 第 3 步的四类归类，写进 `【过程目录】/feishu-comments-【日期】.md`。
+1. `lark-cli drive +list-comments --as user --url 【feishu 链接】 --solved-status false` 读出全部未解决评论；再用 `lark-cli docs +fetch --as user --doc 【feishu 链接】 --scope outline -q '.data.document.revision_id'` 记下版本号。
+2. 按 `nova:feishu-comment` 第 3 步的四类归类，连同 `comment_id` 写进 `【过程目录】/feishu-comments-【日期】.md`。
 3. 派 `nova:doc-writer` 按这些意见修改本地 design.md：「改」和「答」直接改，「定」进待决策表。改动大时再走一轮写评循环。
-4. 重新导出，用 `docs +update --command overwrite --doc-format markdown --content @feishu.md` 覆盖飞书文档（方案里的图都来自 mermaid 源码，覆盖后会重新生成），同样检查 2107。
-5. 把处理过的评论标为已解决，然后回到第 5 步处理新增的待定项。
+4. 写回前核对：
+   - 再取一次版本号。和第 1 步不一致，说明飞书上的正文在这期间被人改过，整篇覆盖会冲掉这些改动：停下，问用户是先把飞书上的改动同步回本地，还是直接覆盖。
+   - 再读一次未解决评论。有第 1 步之后新加的，先按第 2、3 步处理，再回到这一步。
+5. 对第 2 步记下的每条评论（四类都算，「定」已进待决策表）执行 `lark-cli drive +resolve-comment --as user --url 【feishu 链接】 --comment-id 【comment_id】`。这一步必须在覆盖之前做：整篇覆盖会丢掉评论和正文的对应位置。
+6. 重新导出，在过程目录里执行 `lark-cli docs +update --as user --doc 【feishu 链接】 --command overwrite --doc-format markdown --content @feishu.md` 覆盖飞书文档（方案里的图都来自 mermaid 源码，覆盖后会重新生成），同样检查 2107。
+7. 回到本 skill 第 5 节，处理新增的待定项。
 
 ## 7. 完成
 

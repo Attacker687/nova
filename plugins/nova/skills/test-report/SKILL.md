@@ -24,7 +24,11 @@ description: 根据测试方案、执行结果和缺陷清单生成测试报告�
 
 ## 3. 发布（用户要时）
 
-按 `nova:design` 第 6 节「发布」的做法，把 test-report.md 发布到飞书：用 `【nova】/skills/design/scripts/doc_check.py test-report.md --export 【临时目录】/feishu.md` 取出标题和正文，再 `docs +create --title "【标题】" --doc-format markdown --content @feishu.md`。
+飞书命令的写法和坑见 `【nova】/references/lark-cli.md`。
+
+1. `python 【nova】/skills/design/scripts/doc_check.py test-report.md --export 【临时目录】/feishu.md`，记下它打印的标题。
+2. 在临时目录里执行 `lark-cli docs +create --as user --title "【标题】" --doc-format markdown --content @feishu.md`；放到指定知识库节点下时加 `--parent-token 【节点】`，放哪里先问用户。
+3. 检查返回的 `.data.warnings`，有 `2107` 就原样重试，最多 3 次。
 
 ## 4. 完成
 

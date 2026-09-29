@@ -62,7 +62,7 @@ flowchart LR
 ## 准备
 
 - [Claude Code](https://claude.com/claude-code)
-- Python 3.10+、git
+- Python 3.10+、git。skill 里的脚本一律用 `python` 命令调用；Mac/Linux 上只有 `python3` 时，要让 `python` 也指向它（如 Homebrew 的 `python` 别名、Debian/Ubuntu 的 `python-is-python3` 包）
 - 飞书相关的 skill 需要飞书官方命令行：`npm install -g @larksuite/cli`，然后在自己的终端里 `lark-cli auth login`。需要的用户身份权限：云文档读写（`docx:document:*`）、文档评论（`docs:document.comment:*`）、知识库节点（`wiki:node:read/create/move/retrieve`、`wiki:space:read`）、画板（`board:whiteboard:node:create/read`）。缺权限时 lark-cli 会报 `missing_scope` 并列出缺什么。
 
 ## 安装

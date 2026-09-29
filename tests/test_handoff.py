@@ -9,7 +9,7 @@ ho = load_script("save", "handoff")
 
 
 def run(cwd, *args):
-    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
+    return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True, encoding="utf-8").stdout.strip()
 
 
 def make_repo(path, remote=None):

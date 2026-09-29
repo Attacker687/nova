@@ -21,7 +21,7 @@ description: 写方案：先和用户对齐目标，再由一个 agent 写、另
 - 没有：告诉用户需要先建代码地图，然后按 `nova:codemap` 建。
 - 有，但记录的 `commit` 之后代码有改动：按 `nova:codemap` 做增量更新。
 
-代码地图目录和程序根目录都记入素材，程序根目录就是写评循环的「代码根」。
+代码地图目录和程序根目录都记入素材；写评循环核对代码出处时也用这个程序根目录。
 
 ## 3. 对齐目标
 
@@ -45,7 +45,7 @@ description: 写方案：先和用户对齐目标，再由一个 agent 写、另
 | 评审要点 | `references/review-points.md` |
 | 素材 | goal.md、`inputs/` 下的文件、代码地图目录 |
 | 过程目录 | `.nova/【功能】/design/` |
-| 代码根 | 技术方案给程序根目录；通用方案不给 |
+| 机械检查 | `python scripts/doc_check.py design.md --template 【模板】` 退出码为 0；技术方案另跑 `python 【nova】/skills/codemap/scripts/refcheck.py design.md --root 【程序根】`，退出码为 0 |
 
 ## 5. 交用户拍板
 

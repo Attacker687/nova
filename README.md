@@ -1,6 +1,6 @@
 # nova
 
-自用的 Claude Code 插件：从需求到上线前的 AI 编程流程（代码地图 → 方案 → Story → 实现 → 测试），加上飞书文档协作和工作进度交接。
+一个 Claude Code 插件：从需求到上线前的 AI 编程流程（代码地图 → 方案 → Story → 实现 → 测试），加上飞书文档协作和工作进度交接。
 
 ## 包含什么
 
@@ -63,18 +63,47 @@ flowchart LR
 
 - [Claude Code](https://claude.com/claude-code)
 - Python 3.10+、git。skill 里的脚本一律用 `python` 命令调用；Mac/Linux 上只有 `python3` 时，要让 `python` 也指向它（如 Homebrew 的 `python` 别名、Debian/Ubuntu 的 `python-is-python3` 包）
-- 飞书相关的 skill 需要飞书官方命令行：`npm install -g @larksuite/cli`，然后在自己的终端里 `lark-cli auth login`。需要的用户身份权限：云文档读写（`docx:document:*`）、文档评论（`docs:document.comment:*`）、知识库节点（`wiki:node:read/create/move/retrieve`、`wiki:space:read`）、画板（`board:whiteboard:node:create/read`）。缺权限时 lark-cli 会报 `missing_scope` 并列出缺什么。
+- 飞书官方命令行 lark-cli：`feishu-comment`、`feishu-diagram`、`feishu-wiki` 和「发布到飞书」都靠它；不用飞书可以跳过。在自己的终端里做三步：
+  1. 安装：`npm install -g @larksuite/cli`
+  2. 绑定飞书应用：`lark-cli config init`，按提示新建一个应用，或填入已有自建应用的 App ID 和 App Secret
+  3. 在[飞书开放平台](https://open.feishu.cn/app)给这个应用开通下面的**用户身份**权限，然后 `lark-cli auth login` 登录
+
+  需要的权限：云文档读写（`docx:document:*`）、文档评论（`docs:document.comment:*`）、知识库节点（`wiki:node:read/create/move/retrieve`、`wiki:space:read`）、画板（`board:whiteboard:node:create/read`）。缺权限时 lark-cli 会报 `missing_scope` 并列出缺什么，在开放平台补开通后重新登录即可。
 
 ## 安装
 
 在 Claude Code 里：
 
 ```text
-/plugin marketplace add E:\Code\nova
+/plugin marketplace add Attacker687/nova
 /plugin install nova@nova
 ```
 
-改了插件源码后重新安装（先 `/plugin uninstall nova@nova` 再 install），开新会话生效。
+装好后开新会话生效。
+
+更新到新版（在终端里运行，然后重开 Claude Code）：
+
+```bash
+claude plugin marketplace update nova
+claude plugin update nova@nova
+```
+
+### 团队里用
+
+把下面内容加进项目的 `.claude/settings.json` 并提交。同事打开项目、信任这个文件夹后，Claude Code 会提示安装 nova：
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "nova": {
+      "source": { "source": "github", "repo": "Attacker687/nova" }
+    }
+  },
+  "enabledPlugins": {
+    "nova@nova": true
+  }
+}
+```
 
 ## 会在哪里留下文件
 
@@ -89,7 +118,7 @@ flowchart LR
 ## 开发
 
 ```text
-.claude-plugin/marketplace.json   本地插件市场
+.claude-plugin/marketplace.json   插件市场
 plugins/nova/
   .claude-plugin/plugin.json
   agents/                         7 个 agent
@@ -102,4 +131,6 @@ tests/                            脚本的测试
 ```
 
 - 跑测试：`python -m pytest tests/`
+- 本地调试：`/plugin marketplace add 【本地克隆路径】` 再 `/plugin install nova@nova`。改了插件源码后重新安装（先 `/plugin uninstall nova@nova` 再 install），开新会话生效。
+- 发新版：`plugin.json` 和 `marketplace.json` 里的 `version` 一起改，推到 GitHub 后别人按「安装」一节的更新命令拿到新版。
 - 一条规则只写在一个地方：飞书用法在 `lark-cli.md`，写评循环在 `review-loop.md`，skill 引用它们而不重复。

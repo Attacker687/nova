@@ -74,19 +74,14 @@ flowchart LR
 
 ### Codex
 
-本地源码安装（在终端里运行，路径换成自己的仓库目录）：
-
-```powershell
-codex plugin marketplace add E:\Code\nova
-codex plugin add nova@nova
-```
-
-适配提交推到 GitHub 后，也可以从仓库安装：
+从 GitHub 安装（在终端里运行）：
 
 ```bash
 codex plugin marketplace add https://github.com/Attacker687/nova.git
 codex plugin add nova@nova
 ```
+
+本地源码安装：把第一条换成 `codex plugin marketplace add 【本地克隆路径】`。
 
 装好后打开新聊天，在技能选择器里选择 nova 的对应 skill，或直接说「用 nova 为当前项目生成代码地图」「用 nova 写技术方案」「用 nova 恢复进度」。本文的 `nova:design` 等名称表示插件里的工作流，不需要在 shell 中执行。
 
@@ -94,7 +89,7 @@ Codex 和 Claude Code 共用同一套 skill、角色文件与 Python 脚本，�
 
 Codex app 提供 worktree 管理工具时使用托管目录；CLI 环境使用 git worktree。实际路径保存在 `.nova/【功能】/build/worktrees.json` 或 `test/worktrees.json`，中断后据此恢复。
 
-更新本地源码后，先更新插件版本再重新安装。开发时可只给 `.codex-plugin/plugin.json` 的版本追加或替换 `+codex.【唯一标记】`（例如 `0.2.1+codex.dev1`），以刷新缓存：
+更新本地源码后，先更新插件版本再重新安装。开发时可只给 `.codex-plugin/plugin.json` 的版本追加或替换 `+codex.【唯一标记】`（例如 `0.3.0+codex.dev1`），以刷新缓存：
 
 ```powershell
 codex plugin add nova@nova
